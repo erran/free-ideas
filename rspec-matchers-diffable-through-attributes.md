@@ -1,7 +1,42 @@
 # RSpec matcher's diffable through attribute
+## Proposal
 Currently defining a diffable matcher will perform a diff on the actual and expected values.
 
 I propose that we support sending attributes as the "actual" and "expected" values used in the diffing process.
+
+### Example
+```ruby
+# matchers.rb
+RSpec::Matchers.define_matcher :a_criterion_matching do |expected|
+  match do |actual|
+    next false unless expected[:field].eql?(actual.field)
+    next false unless expected[:operator].eql?(actual.operator)
+    next false unless expected[:value].eql?(actual.value)
+
+    true
+  end
+
+  diffable through_attributes: [:field, :operator, :value]
+end
+
+# *_spec.rb
+criterion1 = Criterion.new(field: 'BAR', operator: 'CONTAINS', value: 'test')
+criteria = Criteria.new([criterion1])
+expect(criteria.criteria).to include(
+  a_criterion_matching(field: 'FOO', operator: 'IS', value: 'test')
+)
+```
+
+```diff
+@@ -1,5 +1,5 @@
+ {
+-  :field => 'FOO',
+-  :operator => 'IS',
++  :field => 'BAR',
++  :operator => 'CONTAINS',
+   :value => 'test'
+ }
+```
 
 ## Background
 I found the following code in the wild at work.
